@@ -1,26 +1,63 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Core palette */
+  --color-accent: #e84c1e;
+  --color-accent-hover: #ff7849;
+  --color-accent-dark: #c0392b;
+
+  /* Backgrounds */
+  --color-background: #0a0f1e;
+  --color-surface: #0d1225;
+  --color-surface-elevated: #111827;
+  --color-border: rgba(255, 255, 255, 0.07);
+
+  /* Text */
+  --color-text-primary: #f0ece2;
+  --color-text-secondary: #94a3b8;
+  --color-text-muted: #475569;
+  --color-text-faint: #334155;
+
+  /* Status colors */
+  --color-success: #22c55e;
+  --color-error: #ef4444;
+  --color-warning: #fbbf24;
+  --color-info: #60a5fa;
+
+  /* Fonts mapped to Tailwind */
+  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-dm-mono), ui-monospace, SFMono-Regular, monospace;
+  --font-display: var(--font-bebas-neue), ui-sans-serif, system-ui, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Global Styles */
+@layer base {
+  body {
+    background-color: var(--color-background);
+    color: var(--color-text-primary);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Utility classes for specific gradients/shadows from the HTML */
+@layer utilities {
+  .bg-glass {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--color-border);
+  }
+  
+  .bg-glass-active {
+    background: rgba(232, 76, 30, 0.15);
+    border: 1px solid rgba(232, 76, 30, 0.3);
+  }
+  
+  .bg-gradient-accent {
+    background: linear-gradient(135deg, var(--color-accent), var(--color-accent-hover));
+  }
+  
+  .bg-gradient-dark {
+    background: linear-gradient(135deg, #1c0a30, #0f1a2e, #1f1203);
+  }
 }
