@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { User, LogOut, Bell, Settings } from "lucide-react";
+import { logout } from "@/app/actions/auth";
 
 export function Topbar() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -100,14 +101,16 @@ export function Topbar() {
                 <Settings className="w-4 h-4" />
                 Settings
               </Link>
-              <Link 
-                href="/login" 
-                className="flex items-center gap-2 px-4 py-2 text-sm text-error hover:bg-error/10 transition-colors border-t border-border/50 mt-1"
-                onClick={() => setIsDropdownOpen(false)}
+              <button 
+                onClick={() => {
+                  setIsDropdownOpen(false);
+                  logout();
+                }}
+                className="flex w-full items-center gap-2 px-4 py-2 text-sm text-error hover:bg-error/10 transition-colors border-t border-border/50 mt-1"
               >
                 <LogOut className="w-4 h-4" />
                 Sign Out
-              </Link>
+              </button>
             </div>
           )}
         </div>

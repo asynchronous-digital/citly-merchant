@@ -1,9 +1,14 @@
+"use client";
+
+import { useActionState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { login } from "@/app/actions/auth";
 
 export default function LoginPage() {
+  const [state, formAction, isPending] = useActionState(login, null);
   return (
     <Card className="w-full bg-surface shadow-2xl border-border">
       <CardHeader className="bg-gradient-accent p-8 text-center rounded-t-xl border-b-0 pb-6">
@@ -25,23 +30,28 @@ export default function LoginPage() {
           </Link>
         </div>
 
-        <form className="space-y-4">
+        <form action={formAction} className="space-y-4">
+          {state?.error && (
+            <div className="bg-error/10 text-error text-xs font-semibold px-3 py-2 rounded-md">
+              {state.error}
+            </div>
+          )}
           <div className="space-y-1.5">
             <label className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">
               Email Address
             </label>
-            <Input type="email" placeholder="owner@restaurant.com" required />
+            <Input name="email" type="email" placeholder="owner@restaurant.com" required />
           </div>
           
           <div className="space-y-1.5">
             <label className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">
               Password
             </label>
-            <Input type="password" placeholder="••••••••" required />
+            <Input name="password" type="password" placeholder="••••••••" required />
           </div>
 
-          <Button className="w-full mt-2" size="lg">
-            Sign In
+          <Button type="submit" className="w-full mt-2" size="lg" disabled={isPending}>
+            {isPending ? "Signing In..." : "Sign In"}
           </Button>
         </form>
 
