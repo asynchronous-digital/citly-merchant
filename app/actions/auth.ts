@@ -13,7 +13,7 @@ export async function login(prevState: any, formData: FormData) {
   }
 
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_ERPNEXT_URL || "http://104.248.237.122"}/api/method/login`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_ERPNEXT_URL}/api/method/login`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -44,7 +44,7 @@ export async function login(prevState: any, formData: FormData) {
 
     // Role Verification: Check if user is a Merchant/System User
     // First get the logged in user email (just to be safe, though we have 'email')
-    const userDocRes = await fetch(`${process.env.NEXT_PUBLIC_ERPNEXT_URL || "http://104.248.237.122"}/api/resource/User/${email}`, {
+    const userDocRes = await fetch(`${process.env.NEXT_PUBLIC_ERPNEXT_URL}/api/resource/User/${email}`, {
       headers: {
         "Accept": "application/json",
         "Cookie": `sid=${sid}`
@@ -58,7 +58,7 @@ export async function login(prevState: any, formData: FormData) {
       // Regular customers are "Website User". Merchants/Staff are "System User"
       if (userType !== "System User") {
         // Destroy the session on the backend since they aren't authorized for this portal
-        await fetch(`${process.env.NEXT_PUBLIC_ERPNEXT_URL || "http://104.248.237.122"}/api/method/logout`, {
+        await fetch(`${process.env.NEXT_PUBLIC_ERPNEXT_URL}/api/method/logout`, {
           method: "POST",
           headers: { "Cookie": `sid=${sid}` }
         });

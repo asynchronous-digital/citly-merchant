@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 
-const BASE_URL = process.env.NEXT_PUBLIC_ERPNEXT_URL || "http://104.248.237.122";
+const BASE_URL = process.env.NEXT_PUBLIC_ERPNEXT_URL;
 
 export interface ErpNextApiError {
   message: string;
