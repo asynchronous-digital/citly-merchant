@@ -51,9 +51,12 @@ export async function login(prevState: any, formData: FormData) {
       }
     });
 
+    let restaurantName = "";
     if (userDocRes.ok) {
       const userData = await userDocRes.json();
       const userType = userData.data?.user_type;
+      // Assuming the app developer adds a custom link field 'restaurant' to the User doctype
+      restaurantName = userData.data?.restaurant || "";
       
       // Regular customers are "Website User". Merchants/Staff are "System User"
       if (userType !== "System User") {
@@ -79,6 +82,16 @@ export async function login(prevState: any, formData: FormData) {
       maxAge: 60 * 60 * 24 * 3, // 3 days
     });
 
+    if (restaurantName) {
+      cookieStore.set("restaurant_name", restaurantName, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: 60 * 60 * 24 * 3,
+      });
+    }
+
   } catch (error: any) {
     console.error("Login Error:", error);
     return { error: "An unexpected error occurred connecting to the server" };
@@ -97,6 +110,7 @@ export async function logout() {
   } finally {
     const cookieStore = await cookies();
     cookieStore.delete("sid");
+    cookieStore.delete("restaurant_name");
     redirect("/login");
   }
 }

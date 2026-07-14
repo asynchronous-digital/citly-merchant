@@ -2,6 +2,7 @@
 
 import { erpFetch } from "@/lib/erpnext/client";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 
 export async function getMenuCategories() {
   try {
@@ -26,6 +27,14 @@ export async function getMenuCategories() {
 
 export async function getMenuItems() {
   try {
+    const cookieStore = await cookies();
+    const restaurantName = cookieStore.get("restaurant_name")?.value;
+    
+    const filters = [["is_sales_item","=",1], ["disabled","=",0]];
+    if (restaurantName) {
+      filters.push(["restaurant","=",restaurantName]);
+    }
+
     // 1. Fetch Items
     const items = await erpFetch<{ 
       name: string; 
@@ -34,7 +43,7 @@ export async function getMenuItems() {
       image: string; 
       description: string; 
       disabled: number; 
-    }[]>('/api/resource/Item?fields=["name","item_name","item_group","image","description","disabled"]&filters=[["is_sales_item","=",1],["disabled","=",0]]&limit=100');
+    }[]>(`/api/resource/Item?fields=["name","item_name","item_group","image","description","disabled"]&filters=${JSON.stringify(filters)}&limit=100`);
     
     if (!items || !Array.isArray(items)) {
       return [];
@@ -140,18 +149,27 @@ export async function createMenuItem(prevState: any, formData: FormData) {
   }
 
   try {
+    const cookieStore = await cookies();
+    const restaurantName = cookieStore.get("restaurant_name")?.value;
+
+    const payload: any = {
+      item_code: name.replace(/\s+/g, '-').toUpperCase() + '-' + Date.now().toString().slice(-4),
+      item_name: name,
+      item_group: category,
+      is_stock_item: 0,
+      is_sales_item: 1,
+      stock_uom: "Nos",
+      description: "Added from Citly Dashboard"
+    };
+
+    if (restaurantName) {
+      payload.restaurant = restaurantName;
+    }
+
     // 1. Create Item
     const itemData = await erpFetch<any>("/api/resource/Item", {
       method: "POST",
-      body: JSON.stringify({
-        item_code: name.replace(/\s+/g, '-').toUpperCase(),
-        item_name: name,
-        item_group: category,
-        is_stock_item: 0,
-        is_sales_item: 1,
-        stock_uom: "Nos",
-        description: "Added from Citly Dashboard"
-      })
+      body: JSON.stringify(payload)
     });
 
     // 2. Create Item Price
