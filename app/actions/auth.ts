@@ -53,16 +53,18 @@ export async function login(prevState: any, formData: FormData) {
     });
 
     let restaurantName = "";
+    let userFullName = "";
+    let isMerchantRole = false;
     if (userDocRes.ok) {
       const userData = await userDocRes.json();
       const userType = userData.data?.user_type;
+      userFullName = userData.data?.full_name || "";
       // Assuming the app developer adds a custom link field 'restaurant' to the User doctype
       restaurantName = userData.data?.restaurant || "";
       
       // Check if they have the Merchant role explicitly
       const hasMerchantRole = userData.data?.roles?.some((r: any) => r.role === "Merchant");
-
-      console.log("DEBUG LOGIN:", { email, userType, restaurantName, hasMerchantRole, roles: userData.data?.roles });
+      isMerchantRole = hasMerchantRole;
 
       // If they are a System User, or they have a restaurant linked, or they have the Merchant role
       const isMerchant = userType === "System User" || !!restaurantName || hasMerchantRole;
@@ -98,6 +100,22 @@ export async function login(prevState: any, formData: FormData) {
         maxAge: 60 * 60 * 24 * 3,
       });
     }
+
+    cookieStore.set("user_full_name", userFullName || data.full_name || "User", {
+      httpOnly: false, // Accessible to client if needed, or we can read it on server
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 3,
+    });
+    
+    cookieStore.set("user_role", isMerchantRole ? "Merchant" : "Owner", {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 3,
+    });
 
   } catch (error: any) {
     console.error("Login Error:", error);
