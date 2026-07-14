@@ -24,7 +24,7 @@ export async function login(prevState: any, formData: FormData) {
 
     const data = await res.json();
 
-    if (!res.ok || data.message !== "Logged In") {
+    if (!res.ok || (data.message !== "Logged In" && data.message !== "No App")) {
       return { error: data.message || "Invalid credentials" };
     }
 
@@ -43,11 +43,12 @@ export async function login(prevState: any, formData: FormData) {
     }
 
     // Role Verification: Check if user is a Merchant/System User
-    // First get the logged in user email (just to be safe, though we have 'email')
+    const ADMIN_TOKEN = process.env.ERPNEXT_ADMIN_TOKEN || "token 1495f539fda7d5a:8fd489ef0afcf1d";
+    // Fetch using Admin Token to ensure we can read user_type and roles, which are restricted for normal users
     const userDocRes = await fetch(`${process.env.NEXT_PUBLIC_ERPNEXT_URL}/api/resource/User/${email}`, {
       headers: {
         "Accept": "application/json",
-        "Cookie": `sid=${sid}`
+        "Authorization": ADMIN_TOKEN
       }
     });
 
@@ -58,8 +59,14 @@ export async function login(prevState: any, formData: FormData) {
       // Assuming the app developer adds a custom link field 'restaurant' to the User doctype
       restaurantName = userData.data?.restaurant || "";
       
-      // Regular customers are "Website User". Merchants/Staff are "System User"
-      if (userType !== "System User") {
+      // Check if they have the Merchant role explicitly
+      const hasMerchantRole = userData.data?.roles?.some((r: any) => r.role === "Merchant");
+
+      console.log("DEBUG LOGIN:", { email, userType, restaurantName, hasMerchantRole, roles: userData.data?.roles });
+
+      // If they are a System User, or they have a restaurant linked, or they have the Merchant role
+      const isMerchant = userType === "System User" || !!restaurantName || hasMerchantRole;
+      if (!isMerchant) {
         // Destroy the session on the backend since they aren't authorized for this portal
         await fetch(`${process.env.NEXT_PUBLIC_ERPNEXT_URL}/api/method/logout`, {
           method: "POST",
@@ -112,5 +119,107 @@ export async function logout() {
     cookieStore.delete("sid");
     cookieStore.delete("restaurant_name");
     redirect("/login");
+  }
+}
+
+export async function registerMerchant(prevState: any, formData: FormData) {
+  const restaurantName = formData.get("restaurant_name") as string;
+  const fullName = formData.get("full_name") as string;
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
+  
+  const fields = { restaurant_name: restaurantName, full_name: fullName, email };
+
+  if (!restaurantName || !fullName || !email || !password) {
+    return { error: "All fields are required", fields };
+  }
+
+  const ADMIN_TOKEN = process.env.ERPNEXT_ADMIN_TOKEN || "token 1495f539fda7d5a:8fd489ef0afcf1d";
+  const BASE_URL = process.env.NEXT_PUBLIC_ERPNEXT_URL || "http://104.248.237.122";
+
+  try {
+    // 1. Create User
+    const userRes = await fetch(`${BASE_URL}/api/resource/User`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Authorization": ADMIN_TOKEN,
+      },
+      body: JSON.stringify({
+        email: email,
+        first_name: fullName,
+        new_password: password,
+        enabled: 1,
+        send_welcome_email: 0,
+        user_type: "System User",
+        roles: [{ role: "Merchant" }]
+      }),
+    });
+
+    const userData = await userRes.json();
+    if (!userRes.ok) {
+      console.error("User Creation Failed:", JSON.stringify(userData, null, 2));
+      let errorMessage = userData.exc_type || "Failed to create user account";
+      if (userData._server_messages) {
+        try {
+          const messages = JSON.parse(userData._server_messages);
+          if (messages.length > 0) {
+            const msgObj = JSON.parse(messages[0]);
+            errorMessage = msgObj.message || errorMessage;
+          }
+        } catch (e) {}
+      } else if (userData.exception) {
+        const exLines = String(userData.exception).split("\n");
+        errorMessage = exLines[exLines.length - 2] || errorMessage;
+      }
+      
+      // Strip HTML tags from the error message (e.g. <div>...</div>)
+      errorMessage = errorMessage.replace(/<[^>]*>?/gm, '');
+      
+      return { error: `Registration failed: ${errorMessage}`, fields };
+    }
+
+
+
+    // 3. Create Restaurant Record
+    const restRes = await fetch(`${BASE_URL}/api/resource/Restaurant`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Authorization": ADMIN_TOKEN,
+      },
+      body: JSON.stringify({
+        restaurant_name: restaurantName,
+        cuisine: "General",
+        status: "Open",
+        phone: "Update in Settings",
+        address: "Update in Settings"
+      }),
+    });
+
+    const restData = await restRes.json();
+    const createdRestaurantName = restData.data?.name || restaurantName;
+
+    // 4. Update User with Restaurant Link
+    await fetch(`${BASE_URL}/api/resource/User/${email}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Authorization": ADMIN_TOKEN,
+      },
+      body: JSON.stringify({
+        restaurant: createdRestaurantName
+      }),
+    });
+
+    // 5. Automatically log them in
+    return await login(null, formData);
+
+  } catch (error: any) {
+    console.error("Registration Error:", error);
+    return { error: "An unexpected error occurred during registration", fields };
   }
 }
