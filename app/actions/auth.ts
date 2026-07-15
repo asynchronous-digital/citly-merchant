@@ -66,6 +66,27 @@ export async function login(prevState: any, formData: FormData) {
       const hasMerchantRole = userData.data?.roles?.some((r: any) => r.role === "Merchant");
       isMerchantRole = hasMerchantRole;
 
+      // Fallback: If restaurantName is not set on the User, query Restaurant by owner email!
+      if (!restaurantName) {
+        try {
+          const baseUrl = process.env.NEXT_PUBLIC_ERPNEXT_URL || "http://104.248.237.122";
+          const restQueryRes = await fetch(`${baseUrl}/api/resource/Restaurant?filters=[["owner","=","${data.user}"]]`, {
+            headers: {
+              "Accept": "application/json",
+              "Authorization": ADMIN_TOKEN
+            }
+          });
+          if (restQueryRes.ok) {
+            const restQueryData = await restQueryRes.json();
+            if (restQueryData.data && restQueryData.data.length > 0) {
+              restaurantName = restQueryData.data[0].name;
+            }
+          }
+        } catch (e) {
+          console.error("Failed to query restaurant fallback:", e);
+        }
+      }
+
       // If they are a System User, or they have a restaurant linked, or they have the Merchant role
       const isMerchant = userType === "System User" || !!restaurantName || hasMerchantRole;
       if (!isMerchant) {

@@ -38,8 +38,22 @@ export async function erpFetch<T>(
       const data = await res.json();
       
       if (!res.ok || data.exc) {
+        // Extract the real error message from ERPNext's nested response
+        let errorMessage = data.message || "An error occurred in ERPNext";
+        if (data._server_messages) {
+          try {
+            const messages = JSON.parse(data._server_messages);
+            if (messages.length > 0) {
+              const msgObj = JSON.parse(messages[0]);
+              errorMessage = (msgObj.message || errorMessage).replace(/<[^>]*>?/gm, '');
+            }
+          } catch (e) {}
+        } else if (data.exception) {
+          const lines = String(data.exception).split("\n").filter(Boolean);
+          errorMessage = lines[lines.length - 1] || errorMessage;
+        }
         throw {
-          message: data.message || "An error occurred in ERPNext",
+          message: errorMessage,
           status: res.status,
           originalError: data
         } as ErpNextApiError;
