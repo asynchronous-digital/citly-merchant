@@ -43,7 +43,7 @@ export async function login(prevState: any, formData: FormData) {
     }
 
     // Role Verification: Check if user is a Merchant/System User
-    const ADMIN_TOKEN = process.env.ERPNEXT_ADMIN_TOKEN || "token 1495f539fda7d5a:8fd489ef0afcf1d";
+    const ADMIN_TOKEN = process.env.ERPNEXT_ADMIN_TOKEN || "";
     // Fetch using Admin Token to ensure we can read user_type and roles, which are restricted for normal users
     const userDocRes = await fetch(`${process.env.NEXT_PUBLIC_ERPNEXT_URL}/api/resource/User/${email}`, {
       headers: {
@@ -173,7 +173,7 @@ export async function registerMerchant(prevState: any, formData: FormData) {
     return { error: "All fields are required", fields };
   }
 
-  const ADMIN_TOKEN = process.env.ERPNEXT_ADMIN_TOKEN || "token 1495f539fda7d5a:8fd489ef0afcf1d";
+  const ADMIN_TOKEN = process.env.ERPNEXT_ADMIN_TOKEN || "";
   const BASE_URL = process.env.NEXT_PUBLIC_ERPNEXT_URL || "http://104.248.237.122";
 
   try {

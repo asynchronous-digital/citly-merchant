@@ -14,7 +14,7 @@ async function getRestaurantName(): Promise<string> {
   try {
     const loggedUser = await erpFetch<string>("/api/method/frappe.auth.get_logged_user");
     if (loggedUser && loggedUser !== "Guest") {
-      const ADMIN_TOKEN = process.env.ERPNEXT_ADMIN_TOKEN || "token 1495f539fda7d5a:8fd489ef0afcf1d";
+      const ADMIN_TOKEN = process.env.ERPNEXT_ADMIN_TOKEN || "";
       const baseUrl = process.env.NEXT_PUBLIC_ERPNEXT_URL || "http://104.248.237.122";
 
       const userRes = await fetch(`${baseUrl}/api/resource/User/${encodeURIComponent(loggedUser)}`, {
@@ -295,7 +295,7 @@ export async function deleteMenuItem(id: string) {
 }
 
 export async function setupDoctypes() {
-  const adminToken = process.env.ERPNEXT_ADMIN_TOKEN || "token 1495f539fda7d5a:8fd489ef0afcf1d";
+  const adminToken = process.env.ERPNEXT_ADMIN_TOKEN || "";
   const baseUrl = process.env.NEXT_PUBLIC_ERPNEXT_URL;
 
   const createDocType = async (payload: any) => {
