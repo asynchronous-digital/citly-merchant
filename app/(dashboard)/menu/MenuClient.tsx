@@ -9,6 +9,7 @@ import { Search, Filter, Plus, Edit2, Trash2, Loader2, X, AlertCircle, CheckCirc
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { createCategory, createMenuItem, editCategory, deleteCategory, deleteMenuItem, updateMenuItem } from "@/app/actions/menu";
+import { RichTextEditor } from "@/components/ui/RichTextEditor";
 
 interface Category {
   id: string;
@@ -35,6 +36,7 @@ export function MenuClient({ initialCategories, initialItems }: { initialCategor
   
   const [categoryToEdit, setCategoryToEdit] = useState<Category | null>(null);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState<Category | null>(null);
+  const [newItemDescription, setNewItemDescription] = useState("");
 
   // Loading States
   const [isSubmittingItem, setIsSubmittingItem] = useState(false);
@@ -151,6 +153,7 @@ export function MenuClient({ initialCategories, initialItems }: { initialCategor
           setIsSubmittingItem(true);
           setAddItemError(null);
           const formData = new FormData(e.currentTarget);
+          formData.set("description", newItemDescription);
           const res = await createMenuItem(null, formData);
           setIsSubmittingItem(false);
           if (res.error) {
@@ -158,6 +161,7 @@ export function MenuClient({ initialCategories, initialItems }: { initialCategor
             setToast({ type: 'error', message: res.error });
           } else {
             setIsAddItemOpen(false);
+            setNewItemDescription("");
             setToast({ type: 'success', message: 'Menu item added successfully!' });
           }
         }} className="space-y-4">
@@ -173,7 +177,7 @@ export function MenuClient({ initialCategories, initialItems }: { initialCategor
           </div>
           <div className="space-y-1.5">
             <label className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Description</label>
-            <Input name="description" placeholder="A short description..." />
+            <RichTextEditor value={newItemDescription} onChange={setNewItemDescription} placeholder="Describe your dish, ingredients, and allergy info..." />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
@@ -376,7 +380,10 @@ function MenuItemCard({ name, category, price, status, description, emoji = "üç
         <div className="text-xs text-text-secondary mb-1">{category}</div>
         <h4 className="font-medium text-text-primary mb-1 line-clamp-2">{name}</h4>
         {description && (
-          <p className="text-xs text-text-muted line-clamp-2 mb-2">{description}</p>
+          <div 
+            className="text-xs text-text-muted line-clamp-2 mb-2 leading-relaxed prose prose-xs dark:prose-invert max-w-none"
+            dangerouslySetInnerHTML={{ __html: description }}
+          />
         )}
         
         <div className="mt-auto pt-3 flex items-center justify-between">
