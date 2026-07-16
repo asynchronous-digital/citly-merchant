@@ -1,9 +1,15 @@
+"use client";
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { useActionState } from "react";
+import { registerMerchant } from "@/app/actions/auth";
+import { Loader2 } from "lucide-react";
 
 export default function RegisterPage() {
+  const [state, formAction, isPending] = useActionState(registerMerchant, null);
   return (
     <Card className="w-full bg-surface shadow-2xl border-border">
       <CardHeader className="bg-gradient-accent p-8 text-center rounded-t-xl border-b-0 pb-6">
@@ -25,37 +31,50 @@ export default function RegisterPage() {
           </Link>
         </div>
 
-        <form className="space-y-4">
+        <form action={formAction} className="space-y-4">
           <div className="space-y-1.5">
             <label className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">
               Restaurant Name
             </label>
-            <Input type="text" placeholder="The Great Cafe" required />
+            <Input name="restaurant_name" type="text" placeholder="The Great Cafe" defaultValue={(state as any)?.fields?.restaurant_name || ""} required />
           </div>
 
           <div className="space-y-1.5">
             <label className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">
               Full Name
             </label>
-            <Input type="text" placeholder="John Doe" required />
+            <Input name="full_name" type="text" placeholder="John Doe" defaultValue={(state as any)?.fields?.full_name || ""} required />
           </div>
 
           <div className="space-y-1.5">
             <label className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">
               Email Address
             </label>
-            <Input type="email" placeholder="owner@restaurant.com" required />
+            <Input name="email" type="email" placeholder="owner@restaurant.com" defaultValue={(state as any)?.fields?.email || ""} required />
           </div>
           
           <div className="space-y-1.5">
             <label className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">
               Password
             </label>
-            <Input type="password" placeholder="••••••••" required />
+            <Input name="password" type="password" placeholder="••••••••" required />
           </div>
 
-          <Button className="w-full mt-2" size="lg">
-            Create Account
+          {state?.error && (
+            <div className="text-sm text-red-500 bg-red-500/10 p-3 rounded-md">
+              {state.error}
+            </div>
+          )}
+
+          <Button className="w-full mt-2" size="lg" disabled={isPending}>
+            {isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Creating Account...
+              </>
+            ) : (
+              "Create Account"
+            )}
           </Button>
         </form>
       </CardContent>
